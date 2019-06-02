@@ -35,7 +35,6 @@ $colors = {
 # ROOT WINDOW
 
 root = TkRoot.new('title' => 'PFDB', 'background' => $colors[:background])
-root.grid_rowconfigure(1, 'weight' => 2)
 root.grid_rowconfigure(2, 'weight' => 1)
 root.grid_columnconfigure(0, 'weight' => 1)
 icon = TkPhotoImage.new('file' => 'icons/icon.gif')
@@ -45,15 +44,30 @@ $root = root
 # BASIC SUBCLASSES
 
 class DisplayLabel < TkLabel
-  def initialize(frame, text = "")
-    super(frame, 'height' => 1, 'borderwidth' => 0, 'highlightthickness' => 0, 'background' => $colors[:background2], 'foreground' => $colors[:title_field], 'font' => 'times 12 bold', 'text' => text)
+  def initialize(frame, text, row, column)
+    option_hash = {
+      'background' => $colors[:background2],
+      'foreground' => $colors[:title_field],
+      'borderwidth' => 0,
+      'highlightthickness' => 0,
+      'padx' => 0,
+      'pady' => 0,
+      'text' => text,
+      'font' => "times 12 bold"
+    }
+    temp_label = TkLabel.new(root, option_hash)
+    temp_frame = TkFrame.new(frame, 'height' => 18, 'width' => temp_label.winfo_reqwidth)
+      .grid('row' => row, 'column' => column, 'padx' => 0, 'pady' => 0, 'ipadx' => 0, 'ipady' => 0, 'sticky' => 'e').pack_propagate(0)
+    super(temp_frame, option_hash)
+    self.pack('fill' => 'both', 'expand' => 1)
   end
 end
 
 class DisplayText < TkText
-  def initialize(frame, text = "")
-    super(frame, 'height' => 1, 'width' => 10, 'borderwidth' => 0, 'highlightthickness' => 0, 'background' => $colors[:background2], 'font' => 'times 12')
+  def initialize(frame, text, row, column)
+    super(frame, 'height' => 1, 'width' => 20, 'borderwidth' => 0, 'highlightthickness' => 0, 'background' => $colors[:background2], 'font' => 'times 12')
     self.insert(1.0, text).configure('state' => 'disabled')
+    self.grid('row' => row, 'column' => column, 'padx' => 0, 'pady' => 0, 'ipadx' => 0, 'ipady' => 0, 'sticky' => 'w')
   end
 end
 
@@ -92,6 +106,27 @@ class Button < TkButton
   end
 end
 
+class TitleLabel < TkLabel
+  def initialize(frame, text, row = 0, column = 0)
+    option_hash = {
+      'background' => $colors[:background],
+      'foreground' => $colors[:title_film],
+      'height' => 1,
+      'borderwidth' => 0,
+      'highlightthickness' => 0,
+      'padx' => 0,
+      'pady' => 0,
+      'text' => text,
+      'font' => "times 20 bold"
+    }
+    temp_label = TkLabel.new(root, option_hash)
+    temp_frame = TkFrame.new(frame, 'height' => 24, 'width' => temp_label.winfo_reqwidth)
+      .grid('row' => row, 'column' => column, 'padx' => 0, 'pady' => 0, 'ipadx' => 0, 'ipady' => 0, 'sticky' => 'ew').pack_propagate(0)
+    super(temp_frame, option_hash)
+    self.pack('fill' => 'both', 'expand' => 1)
+  end
+end
+
 class InfoFrame < TkFrame
   def initialize(frame)
     super(frame, 'background' => $colors[:background2], 'highlightthickness' => 1, 'highlightbackground' => $colors[:border], 'padx' => 5)
@@ -113,32 +148,49 @@ stats_button = Button.new(options, 'icons/stats.gif', 0, 5, "Estadísticas")
 news_button = Button.new(options, 'icons/news.gif', 0, 6, "Noticias")
 help_button = Button.new(options, 'icons/help.gif', 0, 7, "Ayuda")
 info_button = Button.new(options, 'icons/info.gif', 0, 8, "Acerca de")
-title = TkLabel.new(options) do
+title = TitleLabel.new(options, 'Personal Film DataBase v2019.06.01', 0, 9)
+
+# SEARCH
+
+search_bar = TkFrame.new(root){
   background $colors[:background]
-  foreground $colors[:title_film]
-  text 'Personal Film DataBase v2019.06.01'
-  font 'times 20 bold'
-  padx 5
-  grid('row' => 0, 'column' => 9)
-end
+  grid('row' => 1, 'column' => 0, 'columnspan' => 2, 'sticky' => 'nsew')
+}
+$search_text = TkEntry.new(search_bar){
+  background 'white'
+  grid('row' => 0, 'column' => 0, 'sticky' => 'ew', 'padx' => 5)
+}
+search_bar.grid_columnconfigure(0, 'weight' => 1)
+search_button = TkButton.new(search_bar){
+  height 1
+  borderwidth 1
+  background $colors[:button_header]
+  activebackground $colors[:button_header_highlight]
+  text 'Buscar'
+  grid('row' => 0, 'column' => 1, 'sticky' => 'ew')
+}
+first_page_button = Button.new(search_bar, 'icons/first.gif', 0, 2, "Primera página")
+previous_page_button = Button.new(search_bar, 'icons/previous.gif', 0, 3, "Anterior página")
+page = TitleLabel.new(search_bar, '1 / 1', 0, 4)
+next_page_button = Button.new(search_bar, 'icons/next.gif', 0, 5, "Siguiente página")
+last_page_button = Button.new(search_bar, 'icons/last.gif', 0, 6, "Última página")
 
 # SCROLLBARS
 
 scroll_list = TkScrollbar.new(root) do
    orient 'vertical'
-   grid('row' => 1, 'column' => 1, 'sticky' => 'ns')
+   grid('row' => 2, 'column' => 1, 'sticky' => 'ns')
 end
-
 scroll_display = TkScrollbar.new(root) do
    orient 'vertical'
-   grid('row' => 2, 'column' => 1, 'sticky' => 'ns')
+   grid('row' => 3, 'column' => 1, 'sticky' => 'ns')
 end
 
 # FILM LIST
 
 $list = TkFrame.new(root){
    background $colors[:background]
-   grid('row' => 1, 'column' => 0, 'sticky' => 'nsew')
+   grid('row' => 2, 'column' => 0, 'sticky' => 'nsew')
 }
 $list.grid_columnconfigure(0, 'weight' => 1)
 
@@ -242,25 +294,19 @@ populate_list
 
 display = TkFrame.new(root){
   background $colors[:background]
-  grid('row' => 2, 'column' => 0, 'sticky' => 'nsew')
+  grid('row' => 3, 'column' => 0, 'sticky' => 'nsew')
 }
 
 display_header = TkFrame.new(display){
   background $colors[:background]
   grid('row' => 0, 'column' => 0, 'columnspan' => 4)
 }
-TkLabel.new(display_header) do
-  background $colors[:background]
-  foreground $colors[:title_film]
-  text 'El Padrino'
-  font 'times 20 bold'
-  padx 5
-  grid('row' => 0, 'column' => 2)
-end
-first_button = Button.new(display_header, 'icons/first.gif', 0, 0, "Primera", 5)
-previous_button = Button.new(display_header, 'icons/previous.gif', 0, 1, "Anterior", 5)
-next_button = Button.new(display_header, 'icons/next.gif', 0, 3, "Siguiente", 5)
-last_button = Button.new(display_header, 'icons/last.gif', 0, 4, "Última", 5)
+
+first_button = Button.new(display_header, 'icons/first.gif', 0, 0, "Primera")
+previous_button = Button.new(display_header, 'icons/previous.gif', 0, 1, "Anterior")
+TitleLabel.new(display_header, 'El Padrino', 0, 2)
+next_button = Button.new(display_header, 'icons/next.gif', 0, 3, "Siguiente")
+last_button = Button.new(display_header, 'icons/last.gif', 0, 4, "Última")
 
 film_options = TkFrame.new(display){
   background $colors[:background]
@@ -273,56 +319,55 @@ fav_button = Button.new(film_options, 'icons/fav.gif', 3, 0, "Marcar como favori
 seen_button = Button.new(film_options, 'icons/seen.gif', 4, 0, "Marcar como vista", 5)
 
 basic_info = InfoFrame.new(display).grid('row' => 1, 'column' => 1, 'padx' => 5, 'sticky' => 'ew')
-DisplayLabel.new(basic_info, "Título original:").grid('row' => 0, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(basic_info, "Año:").grid('row' => 1, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(basic_info, "Duración:").grid('row' => 2, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(basic_info, "País:").grid('row' => 3, 'column' => 0, 'sticky' => 'e')
-DisplayText.new(basic_info, "El Padrino").grid('row' => 0, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(basic_info, "1972").grid('row' => 1, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(basic_info, "175 min.").grid('row' => 2, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(basic_info, "United States").grid('row' => 3, 'column' => 1, 'sticky' => 'w')
+DisplayLabel.new(basic_info, "Título original:", 0, 0)
+DisplayLabel.new(basic_info, "Año:", 1, 0)
+DisplayLabel.new(basic_info, "Duración:", 2, 0)
+DisplayLabel.new(basic_info, "País:", 3, 0)
+DisplayText.new(basic_info, "El Padrino", 0, 1)
+DisplayText.new(basic_info, "1972", 1, 1)
+DisplayText.new(basic_info, "175 min.", 2, 1)
+DisplayText.new(basic_info, "United States", 3, 1)
 
 tech_info = InfoFrame.new(display).grid('row' => 1, 'column' => 2, 'sticky' => 'ew')
-DisplayLabel.new(tech_info, "Nota IMDb:").grid('row' => 0, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(tech_info, "Nota FilmAffinity:").grid('row' => 1, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(tech_info, "Color:").grid('row' => 2, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(tech_info, "Idiomas:").grid('row' => 3, 'column' => 0, 'sticky' => 'e')
-DisplayText.new(tech_info, "9.2 (1437693 votos)").grid('row' => 0, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(tech_info, "9.0 (176014 votos)").grid('row' => 1, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(tech_info, "Color (Eastman Color)").grid('row' => 2, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(tech_info, "English, Italian").grid('row' => 3, 'column' => 1, 'sticky' => 'w')
+DisplayLabel.new(tech_info, "Nota IMDb:", 0, 0)
+DisplayLabel.new(tech_info, "Nota FilmAffinity:", 1, 0)
+DisplayLabel.new(tech_info, "Color:", 2, 0)
+DisplayLabel.new(tech_info, "Idiomas:", 3, 0)
+DisplayText.new(tech_info, "9.2 (1437693 votos)", 0, 1)
+DisplayText.new(tech_info, "9.0 (176014 votos)", 1, 1)
+DisplayText.new(tech_info, "Color (Eastman Color)", 2, 1)
+DisplayText.new(tech_info, "English, Italian", 3, 1)
 
 TkLabel.new(display, 'image' => TkPhotoImage.new('file' => 'notfound.gif'))
   .grid('row' => 1, 'column' => 3, 'rowspan' => 2, 'padx' => 5, 'pady' => 5)
 
-crew_info = InfoFrame.new(display).grid('row' => 2, 'column' => 1, 'padx' => 5, 'pady' => 5)
-DisplayLabel.new(crew_info, "Dirección:").grid('row' => 0, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(crew_info, "Guión:").grid('row' => 1, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(crew_info, "Producción:").grid('row' => 2, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(crew_info, "Cinematografía:").grid('row' => 3, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(crew_info, "Música:").grid('row' => 4, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(crew_info, "Edición:").grid('row' => 5, 'column' => 0, 'sticky' => 'e')
-DisplayText.new(crew_info, "Francis Ford Coppola").grid('row' => 0, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(crew_info, "Mario Puzo, Francis Ford Coppola").grid('row' => 1, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(crew_info, "Gray Frederickson, Al Ruddy, Robert Evans").grid('row' => 2, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(crew_info, "Gordon Willis").grid('row' => 3, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(crew_info, "Nino Rota").grid('row' => 4, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(crew_info, "William Reynolds, Peter Zinner").grid('row' => 5, 'column' => 1, 'sticky' => 'w')
+crew_info = InfoFrame.new(display).grid('row' => 2, 'column' => 1, 'padx' => 5, 'pady' => 5, 'sticky' => 'new')
+DisplayLabel.new(crew_info, "Dirección:", 0, 0)
+DisplayLabel.new(crew_info, "Guión:", 1, 0)
+DisplayLabel.new(crew_info, "Producción:", 2, 0)
+DisplayLabel.new(crew_info, "Cinematografía:", 3, 0)
+DisplayLabel.new(crew_info, "Música:", 4, 0)
+DisplayLabel.new(crew_info, "Edición:", 5, 0)
+DisplayText.new(crew_info, "Francis Ford Coppola", 0, 1)
+DisplayText.new(crew_info, "Mario Puzo, Francis Ford Coppola", 1, 1)
+DisplayText.new(crew_info, "Gray Frederickson, Al Ruddy, Robert Evans", 2, 1)
+DisplayText.new(crew_info, "Gordon Willis", 3, 1)
+DisplayText.new(crew_info, "Nino Rota", 4, 1)
+DisplayText.new(crew_info, "William Reynolds, Peter Zinner", 5, 1)
 
-cast_info = InfoFrame.new(display).grid('row' => 2, 'column' => 2, 'pady' => 5)
-DisplayLabel.new(cast_info, "Dirección:").grid('row' => 0, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "Marlon Brando:").grid('row' => 0, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "Al Pacino:").grid('row' => 1, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "James Caan:").grid('row' => 2, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "Richard S. Castellano:").grid('row' => 3, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "Robert Duvall:").grid('row' => 4, 'column' => 0, 'sticky' => 'e')
-DisplayLabel.new(cast_info, "Sterling Hayden:").grid('row' => 5, 'column' => 0, 'sticky' => 'e')
-DisplayText.new(cast_info, "Don Vito Corleone").grid('row' => 0, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(cast_info, "Michael Corleone").grid('row' => 1, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(cast_info, "Sonny Corleone").grid('row' => 2, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(cast_info, "Clemenza (as Richard Castellano)").grid('row' => 3, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(cast_info, "Tom Hagen").grid('row' => 4, 'column' => 1, 'sticky' => 'w')
-DisplayText.new(cast_info, "Capt. McCluskey").grid('row' => 5, 'column' => 1, 'sticky' => 'w')
+cast_info = InfoFrame.new(display).grid('row' => 2, 'column' => 2, 'pady' => 5, 'sticky' => 'new')
+DisplayLabel.new(cast_info, "Marlon Brando:", 0, 0)
+DisplayLabel.new(cast_info, "Al Pacino:", 1, 0)
+DisplayLabel.new(cast_info, "James Caan:", 2, 0)
+DisplayLabel.new(cast_info, "Richard S. Castellano:", 3, 0)
+DisplayLabel.new(cast_info, "Robert Duvall:", 4, 0)
+DisplayLabel.new(cast_info, "Sterling Hayden:", 5, 0)
+DisplayText.new(cast_info, "Don Vito Corleone", 0, 1)
+DisplayText.new(cast_info, "Michael Corleone", 1, 1)
+DisplayText.new(cast_info, "Sonny Corleone", 2, 1)
+DisplayText.new(cast_info, "Clemenza (as Richard Castellano)", 3, 1)
+DisplayText.new(cast_info, "Tom Hagen", 4, 1)
+DisplayText.new(cast_info, "Capt. McCluskey", 5, 1)
 
 # GUI MAIN LOOP
 
