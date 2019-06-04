@@ -1,0 +1,7 @@
+[2019-06-04 00:26:35] INFO: Creado nuevo fichero de log de PFDB, versión v1.0.
+
+
+[2019-06-04 00:26:35] : ----------------------------------------------------------
+[2019-06-04 00:26:35] INFO: Programa ejecutado.
+[2019-06-04 00:26:35] INFO: Base de datos cargada, hay 190 películas.
+[2019-06-04 00:26:35] INFO: Copia de seguridad automática realizada.
