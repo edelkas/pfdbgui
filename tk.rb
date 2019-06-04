@@ -1,17 +1,13 @@
 #require 'devil'
 require 'tk'
 #require 'tkextlib/tkimg'
-#require_relative 'pfdb.rb'
-require 'yaml'
-
-CONFIG_ENV = 'production'
-CONFIG = YAML.load_file('config.yml')[CONFIG_ENV]
+require_relative 'pfdb.rb'
 
 #<----------------------------------------------------------------------------->
 #<------------------------------------ LIB ------------------------------------>
 #<----------------------------------------------------------------------------->
 
-#startup
+startup
 
 #<----------------------------------------------------------------------------->
 #<------------------------------------ GUI ------------------------------------>
@@ -122,6 +118,23 @@ class DisplayButton < TkButton
   end
 end
 
+class ListButton < TkButton
+  def initialize(frame, text, width, color = $colors[:button_list_light])
+    option_hash = {
+      'anchor' => 'w',
+      'height' => 1,
+      'width' => width,
+      'borderwidth' => 0,
+      'highlightthickness' => 0,
+      'background' => color,
+      'activebackground' => $colors[:button_list_highlight],
+      'text' => text
+    }
+    super(frame, option_hash)
+  end
+end
+
+
 class TitleLabel < TkLabel
   def initialize(frame, text, row = 0, column = 0)
     option_hash = {
@@ -211,7 +224,8 @@ $list = TkFrame.new(root){
 }
 $list.grid_columnconfigure(0, 'weight' => 1)
 
-$headers = {title: "Título", year: "Año", genres: "Géneros", duration: "Duración"}
+$headers = {title: "Título", year: "Año", duration: "Duración", directors: "Director", countries: "Country"}
+=begin
 $movies = [
   {title: 'Matrix', year: 1999, genres: ["Science Fiction", "Action"], duration: 120},
   {title: 'Terminator', year: 1984, genres: ["Action", "Science Fiction"], duration: 130},
@@ -259,9 +273,20 @@ $movies = [
   {title: 'Final', year: 1984, genres: ["Action", "Science Fiction"], duration: 130},
   {title: 'Final', year: 1984, genres: ["Action", "Science Fiction"], duration: 130}
 ]
-$movies_frame = $movies[0..CONFIG['movies_per_page']].map{ |m| m.map{ |k, v| [k, !v.is_a?(Array) ? v.to_s : v.map(&:to_s).join(", ")] }.to_h }
+=end
 
-column_width_limits = {title: 50, year: 15, genres: 50, duration: 15} # hardcoded limits, make them configurable
+#$movies_frame = $movies[0..CONFIG['movies_per_page']].map{ |m| m.map{ |k, v| [k, !v.is_a?(Array) ? v.to_s : v.map(&:to_s).join(", ")] }.to_h }
+$movies_frame = $movies[0..CONFIG['movies_per_page']].map{ |m|
+  {
+    title: m[:title],
+    year: m[:year].to_s,
+    duration: m[:duration].to_s,
+    directors: m[:directors][0].to_s,
+    countries: m[:countries].join(", ")
+  }
+}
+
+column_width_limits = {title: 50, year: 15, duration: 15, directors: 50, countries: 50} # hardcoded limits, make them configurable
 $column_widths = $movies_frame.map{ |s| s.values.flatten(0).map{ |r| r.to_s.size } }.transpose.each_with_index.map{ |s, i| [(s + [$headers.values[i].size]).max, column_width_limits.values[i]].min }
 $header_buttons = []
 $list_buttons = []
@@ -277,34 +302,29 @@ $headers.each_with_index{ |h, j|
     text h[1]
     bind('Button-1'){
       $movies_frame.sort_by!{ |m| m[h[0]] }
-      populate_list
+      update_list
     }
     grid('row' => 0, 'column' => j, 'sticky' => 'ew')
   }
 }
-def populate_list
-  $list_buttons.each{ |b| if b.respond_to?(:place_forget) then b.place_forget end }
-  $list_buttons = []
+$movies_frame.each_with_index{ |m, i|
+  field_list = []
+  m.each_with_index{ |field, j|
+    text = !field[1].is_a?(Array) ? field[1].to_s : field[1].map(&:to_s).join(", ")
+    color = i % 2 == 0 ? $colors[:button_list_light] : $colors[:button_list_dark]
+    pos = field[1].is_a?(Integer) ? 'e' : 'w'
+    field_list << ListButton.new($list, text, $column_widths[j], color).grid('row' => i + 1, 'column' => j, 'sticky' => 'ew')
+  }
+  $list_buttons << field_list
+}
+def update_list
   $movies_frame.each_with_index{ |m, i|
     m.each_with_index{ |field, j|
-      texto = !field[1].is_a?(Array) ? field[1].to_s : field[1].map(&:to_s).join(", ")
-      color = i % 2 == 0 ? $colors[:button_list_light] : $colors[:button_list_dark]
-      pos = field[1].is_a?(Integer) ? 'e' : 'w'
-      $list_buttons << TkButton.new($list){
-        anchor 'w'
-        height 1
-        width $column_widths[j]
-        borderwidth 0
-        highlightthickness 0
-        background color
-        activebackground $colors[:button_list_highlight]
-        text texto
-        grid('row' => i + 1, 'column' => j, 'sticky' => 'ew')
-      }
+      text = !field[1].is_a?(Array) ? field[1].to_s : field[1].map(&:to_s).join(", ")
+      $list_buttons[i][j].configure('text', text)
     }
   }
 end
-populate_list
 
 # FILM DISPLAY
 
@@ -335,8 +355,9 @@ display_frame.grid_columnconfigure(1, 'weight' => 1)
 
 basic_info_button = DisplayButton.new(display_tabs, 'Básica', $colors[:background2])
 tech_info_button = DisplayButton.new(display_tabs, 'Técnica', $colors[:background2])
-tech_info_button = DisplayButton.new(display_tabs, 'Sinopsis', $colors[:background2])
-tech_info_button = DisplayButton.new(display_tabs, 'Cast', $colors[:background2])
+synopsis_info_button = DisplayButton.new(display_tabs, 'Sinopsis', $colors[:background2])
+cast_info_button = DisplayButton.new(display_tabs, 'Cast', $colors[:background2])
+prizes_info_button = DisplayButton.new(display_tabs, 'Premios', $colors[:background2])
 DisplayLabel.new(display_frame, "Título original:", 0, 0)
 DisplayLabel.new(display_frame, "Año:", 1, 0)
 DisplayLabel.new(display_frame, "Duración:", 2, 0)
@@ -369,20 +390,6 @@ DisplayText.new(tech_info, "9.2 (1437693 votos)", 0, 1)
 DisplayText.new(tech_info, "9.0 (176014 votos)", 1, 1)
 DisplayText.new(tech_info, "Color (Eastman Color)", 2, 1)
 DisplayText.new(tech_info, "English, Italian", 3, 1)
-
-crew_info = InfoFrame.new(display).grid('row' => 2, 'column' => 1, 'padx' => 5, 'pady' => 5, 'sticky' => 'new')
-DisplayLabel.new(crew_info, "Dirección:", 0, 0)
-DisplayLabel.new(crew_info, "Guión:", 1, 0)
-DisplayLabel.new(crew_info, "Producción:", 2, 0)
-DisplayLabel.new(crew_info, "Cinematografía:", 3, 0)
-DisplayLabel.new(crew_info, "Música:", 4, 0)
-DisplayLabel.new(crew_info, "Edición:", 5, 0)
-DisplayText.new(crew_info, "Francis Ford Coppola", 0, 1)
-DisplayText.new(crew_info, "Mario Puzo, Francis Ford Coppola", 1, 1)
-DisplayText.new(crew_info, "Gray Frederickson, Al Ruddy, Robert Evans", 2, 1)
-DisplayText.new(crew_info, "Gordon Willis", 3, 1)
-DisplayText.new(crew_info, "Nino Rota", 4, 1)
-DisplayText.new(crew_info, "William Reynolds, Peter Zinner", 5, 1)
 
 cast_info = InfoFrame.new(display).grid('row' => 2, 'column' => 2, 'pady' => 5, 'sticky' => 'new')
 DisplayLabel.new(cast_info, "Marlon Brando:", 0, 0)

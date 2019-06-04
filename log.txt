@@ -5,3 +5,11 @@
 [2019-06-04 00:26:35] INFO: Programa ejecutado.
 [2019-06-04 00:26:35] INFO: Base de datos cargada, hay 190 películas.
 [2019-06-04 00:26:35] INFO: Copia de seguridad automática realizada.
+[2019-06-04 19:31:12] : ----------------------------------------------------------
+[2019-06-04 19:31:13] INFO: Programa ejecutado.
+[2019-06-04 19:31:13] INFO: Base de datos cargada, hay 190 películas.
+[2019-06-04 19:31:13] INFO: Copia de seguridad automática realizada.
+[2019-06-04 19:57:04] : ----------------------------------------------------------
+[2019-06-04 19:57:04] INFO: Programa ejecutado.
+[2019-06-04 19:57:05] INFO: Base de datos cargada, hay 190 películas.
+[2019-06-04 19:57:05] INFO: Copia de seguridad automática realizada.
